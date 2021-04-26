@@ -2861,7 +2861,7 @@ supported_overloaded_operators = cython.declare(frozenset, frozenset((
     '++', '--', '~', '|', '&', '^', '<<', '>>', ',',
     '==', '!=', '>=', '>', '<=', '<',
     '[]', '()', '!', '=',
-    'bool',
+    'bool', 'PyObject',
 )))
 
 def p_c_simple_declarator(s, ctx, empty, is_type, cmethod_flag,
