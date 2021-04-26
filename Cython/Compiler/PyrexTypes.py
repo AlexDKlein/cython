@@ -3788,7 +3788,7 @@ class CppClassType(CType):
             tags = []
             context = {}
             for ix, T in enumerate(self.templates or []):
-                if ix >= builtin_cpp_conversions[self.cname] and not has_operator:
+                if not has_operator and ix >= builtin_cpp_conversions[self.cname]:
                     break
                 if T.is_pyobject or not T.create_from_py_utility_code(env):
                     return False
@@ -3861,7 +3861,7 @@ class CppClassType(CType):
             tags = []
             context = {}
             for ix, T in enumerate(self.templates or []):
-                if ix >= builtin_cpp_conversions[self.cname] and not has_operator:
+                if not has_operator and ix >= builtin_cpp_conversions[self.cname]:
                     break
                 if not T.create_to_py_utility_code(env):
                     return False
