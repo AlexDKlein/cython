@@ -3811,13 +3811,13 @@ class CppClassType(CType):
                 templates = X[:len(self.templates)] 
                 typename = f'{self.name}[{",".join(tags)}]'
                 impl = str(
-                    f'cdef extern from *:\n'
+                    'cdef extern from *:\n'
                     f'    cppclass {self.name}[{templates}]:\n'
                     f'        {self.name}[{templates}]& operator=(object)\n'
                     f'@cname("{cname}")\n'
                     f'cdef {typename} {cname}(object o):\n'
                     f'    cdef {typename} x = o\n'
-                    f'    return x'
+                    '    return x'
                 )
                 utility_code = CythonUtilityCode(
                     impl,
