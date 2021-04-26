@@ -3774,12 +3774,21 @@ class CppClassType(CType):
     def create_from_py_utility_code(self, env):
         if self.from_py_function is not None:
             return True
-        if self.cname in builtin_cpp_conversions or self.cname in cpp_string_conversions:
+        has_operator = any(
+            var_entry.name == 'operator='
+            and isinstance(var_entry.type.return_type, CReferenceType)
+            for var_entry in self.scope.var_entries
+        )
+        if (
+            self.cname in builtin_cpp_conversions 
+            or self.cname in cpp_string_conversions 
+            or has_operator
+        ):
             X = "XYZABC"
             tags = []
             context = {}
             for ix, T in enumerate(self.templates or []):
-                if ix >= builtin_cpp_conversions[self.cname]:
+                if ix >= builtin_cpp_conversions[self.cname] and not has_operator:
                     break
                 if T.is_pyobject or not T.create_from_py_utility_code(env):
                     return False
@@ -3798,9 +3807,31 @@ class CppClassType(CType):
                 'type': self.cname,
             })
             from .UtilityCode import CythonUtilityCode
-            env.use_utility_code(CythonUtilityCode.load(
-                cls.replace('unordered_', '') + ".from_py", "CppConvert.pyx",
-                context=context, compiler_directives=env.directives))
+            if has_operator:
+                templates = X[:len(self.templates)] 
+                typename = f'{self.name}[{",".join(tags)}]'
+                impl = str(
+                    f'cdef extern from *:\n'
+                    f'    cppclass {self.name}[{templates}]:\n'
+                    f'        {self.name}[{templates}]& operator=(object)\n'
+                    f'@cname("{cname}")\n'
+                    f'cdef {typename} {cname}(object o):\n'
+                    f'    cdef {typename} x = o\n'
+                    f'    return x'
+                )
+                utility_code = CythonUtilityCode(
+                    impl,
+                    name=cname,
+                    compiler_directives=env.directives
+                )
+            else:
+                utility_code = CythonUtilityCode.load(
+                    cls.replace('unordered_', '') + ".from_py", 
+                    "CppConvert.pyx",
+                    context=context, 
+                    compiler_directives=env.directives
+                )
+            env.use_utility_code(utility_code)
             self.from_py_function = cname
             return True
 
@@ -3817,12 +3848,20 @@ class CppClassType(CType):
     def create_to_py_utility_code(self, env):
         if self.to_py_function is not None:
             return True
-        if self.cname in builtin_cpp_conversions or self.cname in cpp_string_conversions:
+        has_operator = any(
+            var_entry.name == 'operator PyObject'
+            and isinstance(var_entry.type.return_type, PyObjectType) 
+            for var_entry in self.scope.var_entries)
+        if (
+            self.cname in builtin_cpp_conversions 
+            or self.cname in cpp_string_conversions 
+            or has_operator
+        ):
             X = "XYZABC"
             tags = []
             context = {}
             for ix, T in enumerate(self.templates or []):
-                if ix >= builtin_cpp_conversions[self.cname]:
+                if ix >= builtin_cpp_conversions[self.cname] and not has_operator:
                     break
                 if not T.create_to_py_utility_code(env):
                     return False
@@ -3843,9 +3882,30 @@ class CppClassType(CType):
                 'type': self.cname,
             })
             from .UtilityCode import CythonUtilityCode
-            env.use_utility_code(CythonUtilityCode.load(
-                cls.replace('unordered_', '') + ".to_py", "CppConvert.pyx",
-                context=context, compiler_directives=env.directives))
+            if has_operator:
+                typename = f'{self.name}[{",".join(tags)}]'
+                templates = X[:len(self.templates)] 
+                impl = str(
+                    'cdef extern from *:\n'
+                    f'    cppclass {self.name}[{templates}]:\n'
+                    '        object operator PyObject()\n'
+                    f'@cname("{cname}")\n'
+                    f'cdef object {cname}({typename}& x):\n'
+                    f'    return <object> x'
+                )
+                utility_code = CythonUtilityCode(
+                    impl,
+                    name=cname,
+                    outer_module_scope=self.scope,
+                    compiler_directives=env.directives
+                )
+            else:
+                utility_code = CythonUtilityCode.load(
+                    cls.replace('unordered_', '') + ".to_py", "CppConvert.pyx",
+                    context=context, 
+                    compiler_directives=env.directives
+                )
+            env.use_utility_code(utility_code)
             self.to_py_function = cname
             return True
 
