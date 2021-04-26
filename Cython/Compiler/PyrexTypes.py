@@ -3780,8 +3780,8 @@ class CppClassType(CType):
             for var_entry in self.scope.var_entries
         )
         if (
-            self.cname in builtin_cpp_conversions 
-            or self.cname in cpp_string_conversions 
+            self.cname in builtin_cpp_conversions
+            or self.cname in cpp_string_conversions
             or has_operator
         ):
             X = "XYZABC"
@@ -3808,7 +3808,7 @@ class CppClassType(CType):
             })
             from .UtilityCode import CythonUtilityCode
             if has_operator:
-                templates = X[:len(self.templates)] 
+                templates = X[:len(self.templates)]
                 typename = f'{self.name}[{",".join(tags)}]'
                 impl = str(
                     'cdef extern from *:\n'
@@ -3826,9 +3826,9 @@ class CppClassType(CType):
                 )
             else:
                 utility_code = CythonUtilityCode.load(
-                    cls.replace('unordered_', '') + ".from_py", 
+                    cls.replace('unordered_', '') + ".from_py",
                     "CppConvert.pyx",
-                    context=context, 
+                    context=context,
                     compiler_directives=env.directives
                 )
             env.use_utility_code(utility_code)
@@ -3850,11 +3850,11 @@ class CppClassType(CType):
             return True
         has_operator = any(
             var_entry.name == 'operator PyObject'
-            and isinstance(var_entry.type.return_type, PyObjectType) 
+            and isinstance(var_entry.type.return_type, PyObjectType)
             for var_entry in self.scope.var_entries)
         if (
-            self.cname in builtin_cpp_conversions 
-            or self.cname in cpp_string_conversions 
+            self.cname in builtin_cpp_conversions
+            or self.cname in cpp_string_conversions
             or has_operator
         ):
             X = "XYZABC"
@@ -3884,7 +3884,7 @@ class CppClassType(CType):
             from .UtilityCode import CythonUtilityCode
             if has_operator:
                 typename = f'{self.name}[{",".join(tags)}]'
-                templates = X[:len(self.templates)] 
+                templates = X[:len(self.templates)]
                 impl = str(
                     'cdef extern from *:\n'
                     f'    cppclass {self.name}[{templates}]:\n'
@@ -3902,7 +3902,7 @@ class CppClassType(CType):
             else:
                 utility_code = CythonUtilityCode.load(
                     cls.replace('unordered_', '') + ".to_py", "CppConvert.pyx",
-                    context=context, 
+                    context=context,
                     compiler_directives=env.directives
                 )
             env.use_utility_code(utility_code)
